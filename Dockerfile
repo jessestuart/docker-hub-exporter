@@ -1,25 +1,38 @@
-FROM golang:1.8.1-alpine as builder
+# ============
+# Build phase.
+# ============
+ARG target
+FROM $target/golang:1.10-alpine as builder
+
+COPY qemu-* /usr/bin/
+
+RUN apk --update add ca-certificates && \
+    apk --update add --virtual build-deps git musl-dev gcc
 
 COPY ./ /go/src/github.com/infinityworks/docker-hub-exporter/
 
 WORKDIR /go/src/github.com/infinityworks/docker-hub-exporter/cmd/exporter/
 
-RUN apk --update add ca-certificates \
-    && apk --update add --virtual build-deps git
+ARG goarch
+ENV GOARCH $goarch
+RUN go get && \
+    go test ./... && \
+    GOOS=linux GOARCH=$GOARCH go build -o /exporter .
 
-RUN go get \
- && go test ./... \
- && GOOS=linux go build -o exporter .
+# ============
+# Final phase.
+# ============
+FROM $target/alpine
 
-FROM alpine
+COPY qemu-* /usr/bin/
 
 EXPOSE 9170
 
-RUN addgroup exporter \
-     && adduser -S -G exporter exporter \
-     && apk --update --no-cache add ca-certificates
+RUN addgroup exporter && \
+    adduser -S -G exporter exporter && \
+    apk --update --no-cache add ca-certificates
 
-COPY --from=builder /go/src/github.com/infinityworks/docker-hub-exporter/cmd/exporter/exporter .
+COPY --from=builder /exporter /exporter
 
 USER exporter
 
