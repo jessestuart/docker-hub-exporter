@@ -2,7 +2,7 @@
 # Build phase.
 # ============
 ARG target
-FROM $target/golang:1.10-alpine as builder
+FROM $target/golang:1.11-alpine as builder
 
 COPY qemu-* /usr/bin/
 
@@ -33,7 +33,5 @@ RUN addgroup exporter && \
     apk --update --no-cache add ca-certificates
 
 COPY --from=builder /exporter /exporter
-
-USER exporter
 
 ENTRYPOINT ["/exporter"]
