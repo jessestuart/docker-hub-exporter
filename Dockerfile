@@ -2,14 +2,14 @@
 # Build phase.
 # ============
 ARG target
-FROM $target/golang:1.10-alpine as builder
+FROM $target/golang:1.12-alpine as builder
 
 COPY qemu-* /usr/bin/
 
 RUN apk --update add ca-certificates && \
     apk --update add --virtual build-deps git musl-dev gcc
 
-COPY ./ /go/src/github.com/infinityworks/docker-hub-exporter/
+COPY . /go/src/github.com/infinityworks/docker-hub-exporter/
 
 WORKDIR /go/src/github.com/infinityworks/docker-hub-exporter/cmd/exporter/
 
