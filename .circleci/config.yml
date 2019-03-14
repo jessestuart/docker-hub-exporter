@@ -1,4 +1,4 @@
-version: 2.0
+version: 2.1
 
 build_jobs: &build_jobs
   jobs:
@@ -44,12 +44,6 @@ shared: &shared
           .circleci/load_env.sh
 
     - run:
-        name: Update Go version.
-        command: |
-          source $BASH_ENV
-          .circleci/install_go.sh
-
-    - run:
         name: Build and push Docker image.
         command: |
           source $BASH_ENV
@@ -89,7 +83,7 @@ jobs:
       - run:
           name: Add dynamic shared vars to env.
           command: |
-            apk add --no-cache bash curl jq
+            apk add --no-cache bash curl jq git
             .circleci/load_env.sh
 
       - run:
@@ -101,11 +95,21 @@ jobs:
           name: Push Docker manifest.
           command: |
             source $BASH_ENV
+
             echo $DOCKERHUB_PASS | docker login -u $DOCKERHUB_USER --password-stdin;
+
+            COMMIT_HASH=$(git rev-parse --short HEAD)
+
+            manifest-tool push from-args \
+              --platforms linux/amd64,linux/arm,linux/arm64 \
+              --template "$REGISTRY/$IMAGE:$VERSION-ARCH" \
+              --target "$REGISTRY/$IMAGE:${COMMIT_HASH}"
+
             manifest-tool push from-args \
               --platforms linux/amd64,linux/arm,linux/arm64 \
               --template "$REGISTRY/$IMAGE:$VERSION-ARCH" \
               --target "$REGISTRY/$IMAGE:$VERSION"
+
             if [ "${CIRCLE_BRANCH}" == 'master' ]; then
               manifest-tool push from-args \
                 --platforms linux/amd64,linux/arm,linux/arm64 \
