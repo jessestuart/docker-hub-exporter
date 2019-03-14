@@ -22,7 +22,10 @@ docker build -t $IMAGE_ID \
 echo $DOCKERHUB_PASS | docker login -u $DOCKERHUB_USER --password-stdin
 # Push push push
 docker push $IMAGE_ID
+commit_hash=$(git rev-parse --short HEAD)
+docker tag "$IMAGE_ID" "$REGISTRY/$IMAGE:$commit_hash-$TAG"
+docker push "$REGISTRY/$IMAGE:$commit_hash-$TAG"
 if [ $CIRCLE_BRANCH == 'master' ]; then
-  docker tag "$IMAGE_ID" "$REGISTRY/$IMAGE:latest-$TAG"
-  docker push "$REGISTRY/$IMAGE:latest-$TAG"
+  docker tag "$IMAGE_ID" "$REGISTRY/$IMAGE:master-$TAG"
+  docker push "$REGISTRY/$IMAGE:master-$TAG"
 fi
