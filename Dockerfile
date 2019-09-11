@@ -2,7 +2,7 @@
 # Build phase.
 # ============
 ARG target
-FROM golang:1.12-alpine as builder
+FROM golang:1.13-alpine as builder
 
 RUN apk --update add ca-certificates && \
     apk --update add --virtual build-deps git musl-dev gcc
@@ -19,7 +19,7 @@ RUN go get && \
 # ============
 # Final phase.
 # ============
-FROM $target/alpine:3.9
+FROM $target/alpine:3.10
 
 COPY qemu-* /usr/bin/
 
